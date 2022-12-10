@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class StockMovement extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'movementDate',
+        'type',
+        'quantity',
+        'unitPrice'
+    ];
 }
