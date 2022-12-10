@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->date('movementDate');
             $table->enum('type', \App\Utils\Settings::ALLOWED_TYPES);
-            $table->unsignedInteger('quantity');
+            $table->integer('quantity');
             $table->unsignedDouble('unitPrice')->nullable();
             $table->timestamps();
         });
