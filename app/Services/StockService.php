@@ -9,18 +9,17 @@ class StockService
 
     const CHUNK = 2;
 
-    public $inHand = null;
-    public $records = [];
+    public int|null $inHand = null;
+    public array|null $records = null;
 
     /**
      * Handler method to retrieve the average cost of the stock in hand
-     * @param int $quantity
      * @return float|int
      */
-    public function retrieveAverageCost(int $quantity = 0)
+    public function retrieveAverageCost()
     {
         if($this->inHand === null){
-            $this->hasSufficientStock($quantity);
+            $this->getAvailableBalance();
         }
 
         $this->retrieveRecords();
@@ -34,18 +33,23 @@ class StockService
      */
     public function calculateCost(): float
     {
-        if(count($this->records) == 0){ return 0; }
+        if(is_array($this->records) === false){ $this->retrieveRecords(); }
+        if(count($this->records) === 0){ return 0; }
 
-        //Seperate the oldest purchase since not all units from this purchase will be applicable to the cost
-        $oldestPurchase = array_pop($this->records);
+        //Separate the oldest purchase since not all units from this purchase will be applicable to the cost
+        $oldestPurchase = end($this->records);
         $quantityForOldestPurchase = $this->identifyQuantityLeftFromFirstPurchase();
 
         $cost = 0;
 
         //Using foreach since it's faster than array_map and is easier to read
         //Calculate the cost for balance purchases except the oldest
-        foreach($this->records as $record){
-            $cost += ($record['quantity'] * $record['unitPrice']);
+        $count = count($this->records);
+        foreach($this->records as $key=>$val){
+            if (--$count <= 0) {
+                break;
+            }
+            $cost += ($val['quantity'] * $val['unitPrice']);
         }
 
         //Add the value of stock that can be assigned to the oldest purchase
@@ -56,11 +60,16 @@ class StockService
 
     /**
      * Calculate the quantity left after previous purchases which is needed to assign to the oldest purchase
-     * @return float|int|null
+     * @return int
      */
     public function identifyQuantityLeftFromFirstPurchase(): int
     {
-        return $this->inHand - array_sum(array_column($this->records, 'quantity'));
+        if($this->inHand == null){ $this->getAvailableBalance(); }
+        if($this->records == null){ $this->retrieveRecords(); }
+
+        $last = end($this->records);
+
+        return abs($this->inHand - (array_sum(array_column($this->records, 'quantity')) - $last['quantity']));
     }
 
     /**
@@ -69,6 +78,7 @@ class StockService
      */
     public function retrieveRecords(): void
     {
+        if($this->inHand === null){ $this->getAvailableBalance(); }
         $runningTotal = 0;
         $movementData = [];
         StockMovement::select('id','movementDate','type','quantity','unitPrice')->where('type','purchase')->orderBy('id','DESC')
@@ -91,11 +101,12 @@ class StockService
      */
     public function hasSufficientStock(int $quantity = 0): array
     {
-        $available = $this->getAvailableBalance();
-        $this->inHand = $available;
+        if($this->inHand === null){
+            $this->getAvailableBalance();
+        }
         return [
-                    'isAvailable' => $available >= $quantity,
-                    'totalAvailable' => $available
+                    'isAvailable' => $this->inHand >= $quantity,
+                    'totalAvailable' => $this->inHand
                ];
     }
 
@@ -105,6 +116,8 @@ class StockService
      */
     public function getAvailableBalance(): int
     {
-        return StockMovement::sum('quantity');
+        $balance = StockMovement::sum('quantity');
+        $this->inHand = $balance;
+        return $balance;
     }
 }
