@@ -6,7 +6,6 @@ use App\Models\StockMovement;
 use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Date;
 
 class StockMovementSeeder extends Seeder
 {
