@@ -24,6 +24,9 @@ class StockController extends Controller
             return $hasStock;
         }
 
-        return ['cost' => $this->stockService->retrieveAverageCost($validated['quantity']) ];
+        return [
+            'cost' => $this->stockService->retrieveAverageCost($validated['quantity']) ,
+            'totalAvailable' => $hasStock['totalAvailable']
+        ];
     }
 }
