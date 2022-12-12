@@ -18,4 +18,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/checkAvailableQuantity', [StockController::class, 'checkAvailableQuantity']);
+Route::post('/checkAvailableQuantity', [StockController::class, 'checkAvailableQuantity'])->name('checkQuantity');
