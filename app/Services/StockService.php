@@ -38,19 +38,20 @@ class StockService
         if(count($this->records) === 0){ return 0; }
 
         //Separate the oldest purchase since not all units from this purchase will be applicable to the cost
-        $oldestPurchase = array_pop($this->records);
+        $oldestPurchase = end($this->records);
         $quantityForOldestPurchase = $this->identifyQuantityLeftFromFirstPurchase();
-        $oldestPurchaseCost = $quantityRequired * $oldestPurchase['unitPrice'];
 
         if($quantityForOldestPurchase >= $quantityRequired){
-            return $oldestPurchaseCost;
+            return $quantityRequired * $oldestPurchase['unitPrice'];
         }
+
+        array_pop($this->records);
 
         //starting from the oldest full purchase
         $this->records = array_reverse($this->records);
 
         $qtyRemaining = $quantityRequired - $quantityForOldestPurchase;
-        $cost = $oldestPurchaseCost;
+        $cost = $quantityForOldestPurchase * $oldestPurchase['unitPrice'];;
 
         //Calculate the cost for balance purchases except the oldest
         foreach($this->records as $key=>$val){
@@ -58,8 +59,7 @@ class StockService
                 $qtyRemaining -= $val['quantity'];
                 $cost += ($val['quantity'] * $val['unitPrice']);
             } else {
-                $needed = $val - $qtyRemaining;
-                $cost += ($needed * $val['unitPrice']);
+                $cost += ($qtyRemaining * $val['unitPrice']);
                 break;
             }
         }

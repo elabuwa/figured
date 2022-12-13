@@ -94,12 +94,18 @@ class StockServiceTest extends TestCase
         $this->seed(TestStockMovementSeeder::class);
 
         $service = new StockService();
-        $this->assertSame(50.0, $service->calculateCost(10));
+        $this->assertSame(47.5, $service->calculateCost(10));
 
         StockMovement::query()->delete();
 
         $this->seed(StockMovementSeeder::class);
         $service = new StockService();
-        $this->assertSame(92.4, $service->calculateCost(22));
+        $this->assertSame(99.6, $service->calculateCost(22));
+
+        $service = new StockService();
+        $this->assertSame(42.0, $service->calculateCost(10));
+
+        $service = new StockService();
+        $this->assertSame(64.6, $service->calculateCost(15));
     }
 }
