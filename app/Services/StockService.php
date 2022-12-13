@@ -6,7 +6,6 @@ use App\Models\StockMovement;
 
 class StockService
 {
-
     const CHUNK = 2;
 
     public int|null $inHand = null;
@@ -14,9 +13,10 @@ class StockService
 
     /**
      * Handler method to retrieve the average cost of the stock in hand
-     * @return float|int
+     * @param $quantity
+     * @return float
      */
-    public function retrieveAverageCost()
+    public function retrieveAverageCost($quantity)
     {
         if($this->inHand === null){
             $this->getAvailableBalance();
@@ -24,36 +24,45 @@ class StockService
 
         $this->retrieveRecords();
 
-        return $this->calculateCost();
+        return $this->calculateCost($quantity);
     }
 
     /**
      * Calculate the cost of the stock in hand
-     * @return float|int
+     * @param $quantityRequired
+     * @return float
      */
-    public function calculateCost(): float
+    public function calculateCost($quantityRequired): float
     {
         if(is_array($this->records) === false){ $this->retrieveRecords(); }
         if(count($this->records) === 0){ return 0; }
 
         //Separate the oldest purchase since not all units from this purchase will be applicable to the cost
-        $oldestPurchase = end($this->records);
+        $oldestPurchase = array_pop($this->records);
         $quantityForOldestPurchase = $this->identifyQuantityLeftFromFirstPurchase();
+        $oldestPurchaseCost = $quantityRequired * $oldestPurchase['unitPrice'];
 
-        $cost = 0;
-
-        //Using foreach since it's faster than array_map and is easier to read
-        //Calculate the cost for balance purchases except the oldest
-        $count = count($this->records);
-        foreach($this->records as $key=>$val){
-            if (--$count <= 0) {
-                break;
-            }
-            $cost += ($val['quantity'] * $val['unitPrice']);
+        if($quantityForOldestPurchase >= $quantityRequired){
+            return $oldestPurchaseCost;
         }
 
-        //Add the value of stock that can be assigned to the oldest purchase
-        $cost += ($oldestPurchase['unitPrice'] * $quantityForOldestPurchase);
+        //starting from the oldest full purchase
+        $this->records = array_reverse($this->records);
+
+        $qtyRemaining = $quantityRequired - $quantityForOldestPurchase;
+        $cost = $oldestPurchaseCost;
+
+        //Calculate the cost for balance purchases except the oldest
+        foreach($this->records as $key=>$val){
+            if($qtyRemaining >= $val['quantity']){
+                $qtyRemaining -= $val['quantity'];
+                $cost += ($val['quantity'] * $val['unitPrice']);
+            } else {
+                $needed = $val - $qtyRemaining;
+                $cost += ($needed * $val['unitPrice']);
+                break;
+            }
+        }
 
         return $cost;
     }
@@ -97,7 +106,8 @@ class StockService
 
     /**
      * Check if there is sufficient stock for a given amount
-     * @param integer $quantity Quantity to check against
+     * @param int $quantity
+     * @return array
      */
     public function hasSufficientStock(int $quantity = 0): array
     {
@@ -113,6 +123,7 @@ class StockService
     /**
      * Getting available balance to display the available amount in the error message
      * If displaying the amount is not required, we can simply return a bool after checking if available or not
+     * @return int
      */
     public function getAvailableBalance(): int
     {

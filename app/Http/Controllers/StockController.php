@@ -14,6 +14,13 @@ class StockController extends Controller
         $this->stockService = $stockService;
     }
 
+    /**
+     * Check if the requested quantity is in hand.
+     * If so, get the service to calculate the cost of the required units
+     *
+     * @param AvailableBalanceRequest $request
+     * @return array
+     */
     public function checkAvailableQuantity(AvailableBalanceRequest $request)
     {
         $validated = $request->validated();
@@ -25,7 +32,7 @@ class StockController extends Controller
         }
 
         return [
-            'cost' => $this->stockService->retrieveAverageCost($validated['quantity']) ,
+            'cost' => round($this->stockService->retrieveAverageCost($validated['quantity']),2) ,
             'totalAvailable' => $hasStock['totalAvailable'],
             'isAvailable' => true
         ];

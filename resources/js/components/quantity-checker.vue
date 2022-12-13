@@ -8,7 +8,7 @@
             </form>
         </div>
         <div class="group p-6 bg-white max-w-screen w-3/5 shadow-lg overflow-hidden mx-auto h-48" v-if="hasResponse">
-            <label v-if="response.isAvailable">Cost : {{ response.cost }}</label>
+            <label v-if="response.isAvailable">Cost for requested units : {{ response.cost }}</label>
             <label v-if="response.isAvailable==false">Required quantity unavailable. Max available units : {{ response.totalAvailable }}</label>
 
         </div>

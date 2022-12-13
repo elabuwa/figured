@@ -47,7 +47,7 @@ class StockAvailabilityTest extends TestCase
         );
 
         $response->assertOk();
-        $this->assertJson(json_encode(['cost' => 211.6, 'totalAvailable' => 43]));
+        $this->assertJson(json_encode(['cost' => 42, 'totalAvailable' => 43]));
 
         $response = $this->post('/api/checkAvailableQuantity',
             ['quantity' => 99],
